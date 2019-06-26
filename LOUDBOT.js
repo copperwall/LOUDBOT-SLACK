@@ -8,9 +8,8 @@ const
 	LRU          = DEMAND('lru-cache'),
 	MARKOV       = DEMAND('markov-chains-text').default,
 	SHUFFLE      = DEMAND('knuth-shuffle').knuthShuffle,
-	SLACK        = DEMAND('@slack/client'),
-	SLACK_EVENTS = SLACK.CLIENT_EVENTS.RTM,
-	RTM_EVENTS   = SLACK.RTM_EVENTS,
+	{RTMClient}  = DEMAND('@slack/rtm-api'),
+	{WebClient}  = DEMAND ('@slack/web-api'),
 	LOG          = console.log
 	;
 
@@ -42,10 +41,10 @@ var LOUDBOT = module.exports = function LOUDBOT()
 
 	THIS.CACHE = LRU({ max: 2000, });
 
-	THIS.WEB = new SLACK.WebClient(process.env.SLACK_API_TOKEN);
+	THIS.WEB = new WebClient(process.env.SLACK_API_TOKEN);
 	THIS.LOAD_EMOJI();
-	THIS.RTM = new SLACK.RtmClient(process.env.SLACK_API_TOKEN, {logLevel: 'warn'});
-	THIS.RTM.on(RTM_EVENTS.MESSAGE, function(DATA) { THIS.LISTENUP(DATA); });
+	THIS.RTM = new RTMClient(process.env.SLACK_API_TOKEN, {logLevel: 'warn'});
+	THIS.RTM.on('message', function(DATA) { THIS.LISTENUP(DATA); });
 	THIS.RTM.on('error', function(INFRACTION) { LOG(INFRACTION); });
 };
 
@@ -93,7 +92,7 @@ LOUDBOT.prototype.GOGOGO = function GOGOGO()
 	const THIS = this;
 
 	THIS.RTM.start();
-	THIS.RTM.on(SLACK_EVENTS.RTM_CONNECTION_OPENED, function slackClientOpened()
+	THIS.RTM.on('connected', function slackClientOpened()
 	{
 		LOG('THIS LOUDBOT IS NOW FULLY ARMED AND OPERATIONAL');
 	});
